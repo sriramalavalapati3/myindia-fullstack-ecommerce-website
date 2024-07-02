@@ -210,31 +210,34 @@ const savePaymentDetails = async ({
   }
 };
 
-const saveOrderDetails = async ({
-  product,
-  amount,
-  user,
-  productId,
-  billingAddress,
-  productQuantity,
-  paymentIntentId,
-}: {
-  product: string;
+interface Product {
+  productId: string;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+}
+
+interface SaveOrderDetailsParams {
+  products: Product[];
   amount: number;
   user: string;
-  productId: string;
   billingAddress: string;
-  productQuantity: number;
   paymentIntentId: string;
-}): Promise<IOrder> => {
+}
+
+const saveOrderDetails = async ({
+  products,
+  amount,
+  user,
+  billingAddress,
+  paymentIntentId,
+}: SaveOrderDetailsParams): Promise<IOrder> => {
   try {
     const orderDetails = new orders({
-      product,
+      products,
       amount,
       user,
-      productId,
       billingAddress,
-      productQuantity,
       paymentIntentId,
     });
 

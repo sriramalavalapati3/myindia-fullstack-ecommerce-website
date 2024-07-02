@@ -14,7 +14,8 @@ import {
   handleItemsToCart,
   handleGetCartItems
 } from '../transactions/trasactions';
-//import { checkoutSession, manageStripeHook } from '../transactions/stripeServices';
+import {Product} from '../services/stripe.services'
+import { checkoutSession, manageStripeHook } from '../services/stripe.services';
 
 const handleRegister = async (req: Request, res: Response) => {
   try {
@@ -81,48 +82,68 @@ const getProductsUsingFilter = async (req: Request, res: Response) => {
     ErrorResponse(res, 500, { msg: (error as any).message || '' });
   }
 };
+interface CheckoutRequest extends Request {
+  body: {
+    products: Array<{
+      productId: string;
+      productName: string;
+      quantity: number;
+      unitPrice: number;
+    }>;
+    user: any; // Adjust the type based on your user schema
+    billingAddress: string;
+  };
+}
 
-// const handleCheckout = async (req: Request, res: Response) => {
-//   const { product, amount, user, productId, billingAddress, productQuantity } = req.body;
+const handleCheckout = async (req: CheckoutRequest, res: Response) => {
+  const { products, user, billingAddress } = req.body;
+  console.log(products, user, billingAddress,'123456');
+  try {
+    // Calculate the total amount for all products
+    const totalAmount = products.reduce((total, product) => total + product.unitPrice * product.quantity, 0);
 
-//   try {
-//     const paymentSession = await checkoutSession({
-//       product,
-//       amount,
-//       user,
-//       productId,
-//       billingAddress,
-//       productQuantity,
-//     });
+    // Create a payment session with Stripe
+    const paymentSession = await checkoutSession({
+      products,
+      user,
+      billingAddress,
+    });
 
-//     // Save order details to MongoDB
-//     const orderdetails = await saveOrderDetails({
-//       product,
-//       amount,
-//       user,
-//       productId,
-//       billingAddress,
-//       productQuantity,
-//       paymentIntentId: paymentSession.id,
-//     });
+    // Save order details to MongoDB
+    const orderDetails = await saveOrderDetails({
+      products,
+      amount: totalAmount,
+      user,
+      billingAddress,
+      paymentIntentId: paymentSession.id,
+    });
 
-//     const paymentdetails = await savePaymentDetails({
-//       orderId: orderdetails._id,
-//       paymentIntentId: paymentSession.id,
-//       paymentStatus: orderdetails.paymentStatus,
-//       amount,
-//       currency: paymentSession.currency,
-//     });
+    if (!orderDetails._id) {
+      throw new Error("Failed to create order details");
+    }
 
-//     JSONResponse(res, 201, {
-//       sessionId: paymentSession.id,
-//       url: paymentSession.url,
-//     });
-//   } catch (err) {
-//     console.error("Error creating checkout session:", err);
-//     ErrorResponse(res, 500, { msg: `Error creating checkout session ${err}` });
-//   }
-// };
+    // Save payment details to MongoDB
+    const paymentDetails = await savePaymentDetails({
+      orderId: orderDetails._id.toString(),
+      paymentIntentId: paymentSession.id,
+      paymentStatus: 'pending', // Assuming initial status is 'pending'
+      amount: totalAmount,
+      currency: paymentSession.currency || 'usd',
+    });
+
+    // Send JSON response with session ID and URL
+    JSONResponse(res, 201, {
+      sessionId: paymentSession.id,
+      url: paymentSession.url,
+    });
+  } catch (err) {
+    console.error("Error creating checkout session:", err);
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    ErrorResponse(res, 500, { msg: `Error creating checkout session: ${errorMessage}` });
+  }
+};
+
+
 
 // const handleStripeHooks = async (req: Request, res: Response) => {
 //   try {
@@ -179,7 +200,7 @@ export {
   handleProductById,
   getProductsUsingFilter,
   addUserCart,
-  getCartItems
-//   handleCheckout,
-//   handleStripeHooks,
+  getCartItems,
+  handleCheckout,
+  //handleStripeHooks,
 };
