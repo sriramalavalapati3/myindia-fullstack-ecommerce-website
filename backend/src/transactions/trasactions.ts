@@ -1,9 +1,9 @@
 import { Request } from 'express';
-import { IUser } from '../models/user.model'; // Replace with your actual user model interface
+import { IUser,ICartItem } from '../models/user.model'; // Replace with your actual user model interface
 import { IProduct } from '../models/product.model'; // Replace with your actual product model interface
 import { IOrder } from '../models/order.model'; // Replace with your actual order model interface
 import { IPayment } from '../models/payment.model'; // Replace with your actual payment model interface
-
+import mongoose from 'mongoose';
 const { User, products, orders, payment } = require("../models/index");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -276,6 +276,68 @@ const updateOrderStatus = async (
   }
 };
 
+const handleItemsToCart = async(userId: string, productId: string, quantity: number) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+      const user = await User.findById(userId).session(session);
+      const product = await products.findById(productId).session(session);
+
+      if (!user || !product) {
+          throw new Error('User or product not found');
+      }
+
+      const cartItem = user.cart?.find( (item:ICartItem) => item.productId.equals(product._id));
+
+      if (cartItem) {
+        
+          cartItem.quantity += quantity;
+      } else {
+  
+          user.cart?.push({ productId: product._id, quantity });
+      }
+
+      
+      await user.save({ session });
+
+    
+      await session.commitTransaction();
+      session.endSession();
+
+      return { success: true, message: 'Item added to cart successfully' };
+  } catch (error) {
+    
+      await session.abortTransaction();
+      session.endSession();
+
+      return { success: false, message: (error as any).message };
+  }
+}
+
+const handleGetCartItems = async (userId: string) => {
+  try {
+    // Find the user by their ID and populate the cart items with product details
+    const user = await User.findById(userId).populate('cart.productId').exec();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Extract the cart items from the user document
+    const cartItems = user.cart?.map( (item:ICartItem) => ({
+      product: item.productId,
+      quantity: item.quantity
+    }));
+
+    return cartItems;
+  } catch (error) {
+    throw new Error(`Error fetching cart items: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
+  }
+}
+
+
+
 export {
   userRegister,
   userLogin,
@@ -287,4 +349,6 @@ export {
   saveOrderDetails,
   updatePaymentStatus,
   updateOrderStatus,
+  handleItemsToCart,
+  handleGetCartItems
 };

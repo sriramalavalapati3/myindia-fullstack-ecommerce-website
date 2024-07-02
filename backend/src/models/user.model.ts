@@ -1,6 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 // Define an interface representing a document in MongoDB.
+interface ICartItem {
+    productId:  mongoose.Types.ObjectId;
+    quantity: number;
+}
 interface IUser extends Document {
     name: string;
     email: string;
@@ -8,6 +12,7 @@ interface IUser extends Document {
     address?: string;
     userType?: string;
     mobile?: number;
+    cart?: ICartItem[];
 }
 
 // Create a Schema corresponding to the document interface.
@@ -33,8 +38,22 @@ const userSchema: Schema = new Schema({
     },
     mobile: {
         type: Number
-    }
+    },
+    cart: [
+            {
+                productId: {
+                    type: mongoose.Types.ObjectId,
+                    ref: 'Product', // Assuming you have a Product model
+                    required: true
+                },
+                quantity: {
+                    type: Number,
+                    required: true
+                }
+            }
+          ]
+    
 });
 
 
-export { userSchema, IUser };
+export { userSchema, IUser ,ICartItem};

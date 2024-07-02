@@ -11,6 +11,8 @@ import {
   savePaymentDetails,
   saveOrderDetails,
   updatePaymentStatus,
+  handleItemsToCart,
+  handleGetCartItems
 } from '../transactions/trasactions';
 //import { checkoutSession, manageStripeHook } from '../transactions/stripeServices';
 
@@ -142,6 +144,33 @@ const getProductsUsingFilter = async (req: Request, res: Response) => {
 //   }
 // };
 
+const addUserCart = async (req: Request, res: Response) => {
+  try {
+      const userId = req.body.user._id;
+      const productId = req.params.id;
+      const quantity = req.body.quantity;
+
+      const result = await handleItemsToCart(userId, productId, quantity);
+
+      if (result.success) {
+          JSONResponse(res, 201, { msg: 'Product added to cart successfully' });
+      } else {
+          ErrorResponse(res, 400, { msg: result.message });
+      }
+  } catch (error) {
+      ErrorResponse(res, 500, { msg: error instanceof Error ? error.message : 'An unknown error occurred' });
+  }
+}
+
+const getCartItems = async (req: Request, res: Response) => {
+  try {
+    const userId = req.body.user._id;
+    const cartItems = await handleGetCartItems(userId);
+    JSONResponse(res, 200, { cartItems, msg: 'Cart items fetched successfully' });
+  } catch (error) {
+    ErrorResponse(res, 500, { msg: error instanceof Error ? error.message : 'An unknown error occurred' });
+  }
+}
 export {
   handleRegister,
   handleLogin,
@@ -149,6 +178,8 @@ export {
   getAllProducts,
   handleProductById,
   getProductsUsingFilter,
+  addUserCart,
+  getCartItems
 //   handleCheckout,
 //   handleStripeHooks,
 };

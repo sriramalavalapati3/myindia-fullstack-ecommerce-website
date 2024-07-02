@@ -5,6 +5,7 @@ import { productRoute } from './routes/product';
 import { paymentRoute } from './routes/order';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { cartRoute } from './routes/addCart';
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ app.use(express.json());
 app.use('/api', userRoute);
 app.use('/api', productRoute);
 app.use('/api', paymentRoute);
-
+app.use('/api',cartRoute)
 app.get('/', async (req: Request, res: Response) => {
     try {
         res.status(201).send({ 'msg': 'Welcome to MyIndia' });
