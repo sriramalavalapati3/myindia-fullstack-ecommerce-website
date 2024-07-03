@@ -169,9 +169,8 @@ const addUserCart = async (req: Request, res: Response) => {
   try {
       const userId = req.body.user._id;
       const productId = req.params.id;
-      const quantity = req.body.quantity;
-
-      const result = await handleItemsToCart(userId, productId, quantity);
+      // const quantity = req.body.quantity;
+      const result = await handleItemsToCart(userId, productId);
 
       if (result.success) {
           JSONResponse(res, 201, { msg: 'Product added to cart successfully' });

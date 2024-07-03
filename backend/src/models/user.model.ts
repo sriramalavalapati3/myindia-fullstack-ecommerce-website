@@ -3,7 +3,6 @@ import mongoose, { Schema, Document } from 'mongoose';
 // Define an interface representing a document in MongoDB.
 interface ICartItem {
     productId:  mongoose.Types.ObjectId;
-    quantity: number;
 }
 interface IUser extends Document {
     name: string;
@@ -46,10 +45,6 @@ const userSchema: Schema = new Schema({
                     ref: 'Product', // Assuming you have a Product model
                     required: true
                 },
-                quantity: {
-                    type: Number,
-                    required: true
-                }
             }
           ]
     

@@ -39,6 +39,7 @@ const validateProduct = [
   body('productQuantity').optional().isNumeric().withMessage('Product quantity must be an integer greater than 0').toInt().isInt({ min: 1 }).withMessage('pageSize must be a positive integer'),
   body('productPrize').optional().isFloat({ min: 1 }).withMessage('Product prize must be a positive number'),
   body('productSupplier').optional().isString().withMessage('Product supplier must be a string'),
+  body('productImg').optional().isString().withMessage('Product image must be a string'),
 
   // Middleware to check the validation result
   (req: Request, res: Response, next: NextFunction) => {

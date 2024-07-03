@@ -5,7 +5,7 @@ import {addUserCart, getCartItems} from '../controllers/controller'
 
 const cartRoute :Router = express.Router();
 
-cartRoute.post('/addCart/:id' , auth, authorize(['customer']) ,addUserCart  );
+cartRoute.post('/addCart/:id' , auth, authorize(['customer','seller','admin']) ,addUserCart  );
 cartRoute.get('/getCartItems',auth,authorize(['customer']),getCartItems);
 
 export{

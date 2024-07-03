@@ -8,6 +8,7 @@ interface IProduct extends Document {
     productQuantity?: number;
     productPrize?: number;
     productSupplier?: string;
+    productImage?:string;
 }
 
 // Create a Schema corresponding to the document interface.
@@ -30,6 +31,9 @@ const productSchema: Schema = new Schema({
     },
     productSupplier: {
         type: String
+    },
+    productImg:{
+        type:String
     }
 });
 

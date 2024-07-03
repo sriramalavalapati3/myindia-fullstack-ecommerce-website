@@ -83,6 +83,7 @@ interface HandleUploadRequest extends Request {
     productQuantity?: number;
     productPrize?: number;
     productSupplier?: string;
+    productImg?:string;
   };
 }
 
@@ -95,6 +96,7 @@ const handleUpload = async (req: HandleUploadRequest): Promise<IProduct> => {
       productQuantity,
       productPrize,
       productSupplier,
+      productImg,
     } = req.body;
     const productData = new products({
       product,
@@ -103,6 +105,7 @@ const handleUpload = async (req: HandleUploadRequest): Promise<IProduct> => {
       productQuantity,
       productPrize,
       productSupplier,
+      productImg
     });
 
     await productData.save();
@@ -119,11 +122,7 @@ const handleGetAllProducts = async (
   try {
     const skip = pageOffset * pageSize;
 
-    const productsData = await products
-      .find()
-      .skip(skip)
-      .limit(pageSize)
-      .exec();
+    const productsData = await products.find();
 
     return { productsData, pageOffset };
   } catch (error) {
@@ -279,7 +278,7 @@ const updateOrderStatus = async (
   }
 };
 
-const handleItemsToCart = async(userId: string, productId: string, quantity: number) => {
+const handleItemsToCart = async(userId: string, productId: string) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -293,12 +292,9 @@ const handleItemsToCart = async(userId: string, productId: string, quantity: num
 
       const cartItem = user.cart?.find( (item:ICartItem) => item.productId.equals(product._id));
 
-      if (cartItem) {
+      if (!cartItem) {
         
-          cartItem.quantity += quantity;
-      } else {
-  
-          user.cart?.push({ productId: product._id, quantity });
+        user.cart?.push({ productId: product._id, });
       }
 
       
@@ -328,16 +324,23 @@ const handleGetCartItems = async (userId: string) => {
     }
 
     // Extract the cart items from the user document
-    const cartItems = user.cart?.map( (item:ICartItem) => ({
-      product: item.productId,
-      quantity: item.quantity
+    const cartItems = user.cart?.map((item: any) => ({
+      id: item.productId._id.toString(), // Assuming you want the product ID as a string
+      product: item.productId.product,
+      productCategory: item.productId.productCategory,
+      productDescription: item.productId.productDescription,
+      productQuantity: item.productId.productQuantity,
+      productPrize: item.productId.productPrize,
+      productSupplier: item.productId.productSupplier,
+      // Add more fields as needed
     }));
 
-    return cartItems;
+    return cartItems || [];
   } catch (error) {
     throw new Error(`Error fetching cart items: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
   }
 }
+
 
 
 
